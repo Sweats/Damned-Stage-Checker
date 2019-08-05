@@ -1,0 +1,11 @@
+D:\visual_studio_projects\Damned-Stage-Checker\bin\Release\netcoreapp2.1\Damned-Stage-Checker.deps.json
+D:\visual_studio_projects\Damned-Stage-Checker\bin\Release\netcoreapp2.1\Damned-Stage-Checker.runtimeconfig.json
+D:\visual_studio_projects\Damned-Stage-Checker\bin\Release\netcoreapp2.1\Damned-Stage-Checker.runtimeconfig.dev.json
+D:\visual_studio_projects\Damned-Stage-Checker\bin\Release\netcoreapp2.1\Damned-Stage-Checker.dll
+D:\visual_studio_projects\Damned-Stage-Checker\bin\Release\netcoreapp2.1\Damned-Stage-Checker.pdb
+D:\visual_studio_projects\Damned-Stage-Checker\obj\Release\netcoreapp2.1\Damned-Stage-Checker.csprojAssemblyReference.cache
+D:\visual_studio_projects\Damned-Stage-Checker\obj\Release\netcoreapp2.1\Damned-Stage-Checker.csproj.CoreCompileInputs.cache
+D:\visual_studio_projects\Damned-Stage-Checker\obj\Release\netcoreapp2.1\Damned-Stage-Checker.AssemblyInfoInputs.cache
+D:\visual_studio_projects\Damned-Stage-Checker\obj\Release\netcoreapp2.1\Damned-Stage-Checker.AssemblyInfo.cs
+D:\visual_studio_projects\Damned-Stage-Checker\obj\Release\netcoreapp2.1\Damned-Stage-Checker.dll
+D:\visual_studio_projects\Damned-Stage-Checker\obj\Release\netcoreapp2.1\Damned-Stage-Checker.pdb
