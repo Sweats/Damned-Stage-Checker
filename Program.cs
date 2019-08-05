@@ -136,7 +136,7 @@ public class MainClass
             return;
         }
 
-        if (discordMessageChannel != "bot-testing" || discordMessageChannel != "uploaded-maps")
+        if (discordMessageChannel != "bot-testing" && discordMessageChannel != "uploaded-maps")
         {
             return;
         }
