@@ -5,16 +5,17 @@ using Discord.WebSocket;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using LibGit2Sharp;
-using System.Diagnostics;
-using System.Management.Automation;
+//using System.Management.Automation;
+using LibGit2Sharp;
+using LibGit2Sharp.Handlers;
 
 public class Settings
 {
     public string Token { get; set; }
     public string RepositoryPath { get; set; }
-    //public string GitEmail { get; set; }
-    //public string GitUserName { get; set; }
-    //public string GitPassword { get; set; }
+    public string GitEmail { get; set; }
+    public string GitUserName { get; set; }
+    public string GitPassword { get; set; }
 
     public static Settings Load(string jsonFile)
     {
@@ -29,9 +30,9 @@ public class Settings
         {
             Token = "YOUR BOT TOKEN HERE.",
             RepositoryPath = "FULL PATH TO COMMUNITY REPOSITORY HERE",
-            //GitEmail = "YOUR GITHUB EMAIL HERE THAT YOU WANT TO USE FOR COMMITS.",
-            //GitUserName = "YOUR GITHUB USERNAME HERE.",
-            //GitPassword = "YOUR GITHUB PASSWORD HERE."
+            GitEmail = "YOUR GITHUB EMAIL HERE THAT YOU WANT TO USE FOR COMMITS.",
+            GitUserName = "YOUR GITHUB USERNAME HERE.",
+            GitPassword = "YOUR GITHUB PASSWORD HERE."
         };
 
         string json = JsonConvert.SerializeObject(settings);
@@ -76,44 +77,32 @@ public class MainClass
 
     }
 
-/*
+
     public static void UpdateGitHub(string commitMessage)
     {
-        using (var repo = new Repository(Directory.GetCurrentDirectory()))
+        using (var repo = new Repository(settings.RepositoryPath))
         {
-            LibGit2Sharp.Commands.Stage(repo, "*");
-            Signature signature = new Signature(new Identity("Stage-Checker BOT", settings.GitEmail), DateTime.Now);
-            Commit commit = repo.Commit(commitMessage, signature, signature);
-
-            Remote remote = repo.Network.Remotes["origin"];
-            var options = new PushOptions();
-
-            options.CredentialsProvider = new LibGit2Sharp.Handlers.CredentialsHandler((url, usernameFromUrl, types) =>
-            new UsernamePasswordCredentials()
+            try
             {
-                Username = settings.GitUserName,
-                Password = settings.GitPassword
-            });
+                LibGit2Sharp.Commands.Stage(repo, "*");
+                Signature signature = new Signature(settings.GitUserName, settings.GitEmail, DateTime.Now);
+                Commit commit = repo.Commit(commitMessage, signature, signature);
 
-            repo.Network.Push(remote, @"refs/heads/master", options);
+                Remote remote = repo.Network.Remotes["origin"];
+                var options = new PushOptions();
+                options.CredentialsProvider = (_url, _user, _cred) =>
+                    new UsernamePasswordCredentials { Username = settings.GitUserName, Password = settings.GitPassword};
+                repo.Network.Push(remote, @"refs/heads/master", options);
+            }
 
-        }
-    }*/
 
-    /*public static void UpdateGitHubHack(string commitMessage)
-    {
-        using (PowerShell shell = PowerShell.Create())
-        {
-            shell.AddCommand(@"git init");
-            shell.AddCommand(@"git add .");
-            shell.AddCommand(String.Format(@"git commit -m ""{0}""", commitMessage));
-            shell.AddCommand(@"git push origin master");
-            var results = shell.Invoke();
-            string test = "eouthoae";
+            catch (Exception e)
+            {
+                string message = e.Message;
+
+            }
         }
     }
-    */
-    
 
     public async Task StartBot(string token)
     {

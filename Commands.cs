@@ -200,7 +200,10 @@ Use !search instead if you want to browse the list of stages by name";
             return;
         }
 
+        await message.Channel.SendMessageAsync("Removing your stage from the community repository now...");
         repository.RemoveStage(stage);
+        string commitMessage = String.Format("Removed the stage {0} from the community repository", repositoryStage.Name);
+        MainClass.UpdateGitHub(commitMessage);
         string response = String.Format(@"Successfully removed the stage ""{0}"" from the community repository!", stageName);
         await message.Channel.SendMessageAsync(response);
     }
@@ -222,7 +225,15 @@ Use !search instead if you want to browse the list of stages by name";
         }
 
         Attachment attachment = attachments.ElementAt(0);
-        string fileName = attachment.Filename;
+        string oldFileName = attachment.Filename;
+        bool changesMade = false;
+
+        if (oldFileName.Contains("-") || oldFileName.Contains("_"))
+        {
+            changesMade = true;
+        }
+
+        string fileName = oldFileName.Replace("-", " ").Replace("_", " ");
 
         Stage stage = new Stage()
         {
@@ -247,6 +258,8 @@ Use !search instead if you want to browse the list of stages by name";
 
         DamnedPackage package = new DamnedPackage();
 
+        await message.Channel.SendMessageAsync("Checking your stage archive now...");
+
         if (!package.Check(fileName))
         {
             string reason = package.reasonForFailedCheck;
@@ -256,33 +269,21 @@ Use !search instead if you want to browse the list of stages by name";
             return;
         }
 
-        bool fileChanged = false;
-
-        if (stage.Name.Contains("-"))
-        {
-            fileChanged = true;
-            stage.Name = stage.Name.Replace("-", " ");
-            File.Move(fileName, String.Format("{0}.zip", stage.Name));
-        }
-
-        if (stage.Name.Contains("_"))
-        {
-            fileChanged = true;
-            stage.Name = stage.Name.Replace("_", " ");
-            File.Move(fileName, String.Format("{0}.zip", stage.Name));
-        }
+        await message.Channel.SendMessageAsync("Stage check successful! I am adding your stage into the community repository now...");
 
         repository.AddStage(stage);
+        string commitMessage = String.Format("Added in new stage {0} to the community repository", stage.Name);
+        MainClass.UpdateGitHub(commitMessage);
         Directory.Delete(package.tempDirectory, true);
 
-        if (fileChanged)
+        if (changesMade)
         {
-            string response = String.Format("Stage Check successful! I have added your stage into the community repository.\n\nI have renamed your zip file from \"{0}\" to \"{1}.zip\" because it looks nicer and is slightly easier to search for", fileName, stage.Name);
+            string response = String.Format("Success! Your stage has been added into the community repository!\n\nBy the way, I have renamed your zip file from \"{0}\" to \"{1}.zip\" because it looks nicer and is slightly easier to search for", fileName, stage.Name);
             await message.Channel.SendMessageAsync(response);
             return;
         }
 
-        await message.Channel.SendMessageAsync("Stage Check successful! I have added your stage into the community repository.");
+        await message.Channel.SendMessageAsync("Success! Your stage has been added into the community repository!");
     }
 
 

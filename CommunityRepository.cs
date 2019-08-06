@@ -57,7 +57,7 @@ public class CommunityRepository
         bool success = false;
 
         // Probably a better way to do this.
-        string stageName = stage.Name.ToLower().Replace("-", " ").Replace("_", " ");
+        string stageName = stage.Name.ToLower();
 
         for (int i = 0; i < files.Length; i++)
         {
