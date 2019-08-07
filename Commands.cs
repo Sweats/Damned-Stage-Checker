@@ -550,7 +550,7 @@ If the stage exists in the repository, I will update the stage for you.";
         repository.UpdateStage(oldStage, stage);
         await message.Channel.SendMessageAsync("Updating the author for the stage in the community repository now...");
         string commitMessage = String.Format(@"Updated the author for the stage {0} from ""{1}"" to ""{2}"".", stageName, oldStage.Author, stage.Author);
-        //MainClass.UpdateGitHub(commitMessage);
+        MainClass.UpdateGitHub(commitMessage);
         await message.Channel.SendMessageAsync("Successfully updated the author of the stage!");
     }
 
