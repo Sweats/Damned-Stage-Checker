@@ -55,8 +55,6 @@ public class CommunityRepository
         FileInfo[] files = new DirectoryInfo(Directory.GetCurrentDirectory()).GetFiles("*.zip", SearchOption.TopDirectoryOnly);
 
         bool success = false;
-
-        // Probably a better way to do this.
         string stageName = stage.Name.ToLower();
 
         for (int i = 0; i < files.Length; i++)
@@ -100,6 +98,25 @@ public class CommunityRepository
 
 
         return success;
+    }
+
+    public void UpdateStage(Stage oldStage, Stage newStage)
+    {
+        for (int i = 0; i < Stages.Count; i++)
+        {
+            Stage stage = Stages[i];
+
+            if (stage.Name.ToLower() == oldStage.Name.ToLower())
+            {
+                Stages[i].Name = newStage.Name;
+                Stages[i].Author = newStage.Author;
+                Stages[i].Description = newStage.Description;
+                Stages[i].Date = newStage.Date;
+                Refresh();
+                break;
+            }
+        }
+
     }
 
     public Stage GetStage(string stageName)

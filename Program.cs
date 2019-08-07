@@ -142,6 +142,13 @@ public class MainClass
             return;
         }
 
+
+        if (discordMessage == "!update")
+        {
+            await Commands.HandleUpdateCommand(message, Repository);
+            return;
+        }
+
         if (discordMessage == "!remove")
         {
             await message.Channel.SendMessageAsync(@"You did not specify a stage name. Type in ""!help remove"" if you need help");
@@ -171,6 +178,13 @@ public class MainClass
             await message.Channel.SendMessageAsync(@"You did not specify a stage name. Type in ""!help get"" if you need help.");
             return;
         }
+        
+        if (discordMessage == "!author")
+        {
+            await message.Channel.SendMessageAsync(@"You did not specify a new author or stage name for your query. Type in ""!help author"" if you need help.");
+            return;
+        }
+        
 
         if (discordMessage.StartsWith("!help "))
         {
@@ -199,6 +213,12 @@ public class MainClass
         if (discordMessage.StartsWith("!get "))
         {
             await Commands.HandleGetCommand(message, Repository);
+            return;
+        }
+
+        if (discordMessage.StartsWith("!author "))
+        {
+            await Commands.HandleAuthorCommand(message, Repository);
             return;
         }
     }

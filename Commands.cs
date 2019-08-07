@@ -24,7 +24,12 @@ public static class Commands
 
 6. !search - Searches for one or more stages in the community repository and returns a list of stages that contains your search query. Type ""!help search"" for more information.
 
-7. !info - Searches for a stage in the community repository and returns information on that stage. Type in ""!help info"" for more information.";
+7. !info - Searches for a stage in the community repository and returns information on that stage. Type in ""!help info"" for more information.
+
+8. !author - Updates the author of the stage. Type in ""!help author"" for more information.
+
+9. !update - Updates an existing stage in the community repository that you are the author of with your new version of the stage. Type in ""!help update"" for more information.";
+
 
         await message.Channel.SendMessageAsync(response);
     }
@@ -132,6 +137,35 @@ Use !search instead if you want to browse the list of stages by name";
         await message.Channel.SendMessageAsync(response);
     }
 
+
+    public static async Task HelpAuthorCommand(SocketMessage message)
+    {
+        string response = @"!author is used to update the author of a stage. This command is only used if you are uploading the stage on someone elses behalf and you know that they will never join the Damned Discord.
+
+Usage: !author <newAuthor> <stageName> where newAuthor is the author name and where stageName is the name of the stage that you want the author to be the same as newAuthor.
+
+Example: !author sweats Black Lake Hotel
+
+Parameter newAuthor must be one word and no spaces.
+
+If the stage exists in the repository, I will update the author for you.";
+
+        await message.Channel.SendMessageAsync(response);
+
+    }
+
+
+    public static async Task HelpUpdateCommand(SocketMessage message)
+    {
+        string response = @"!update is used to update the stage after you have made changes to your stage and wish to update the stage itself in the repository.
+
+Usage: Type in !update and then upload your new zip archive with the message.
+
+If the stage exists in the repository, I will update the stage for you.";
+
+        await message.Channel.SendMessageAsync(response);
+    }
+
     public async static Task HandleSubHelpCommand(SocketMessage message)
     {
         string discordMessage = message.Content.ToLower();
@@ -167,6 +201,19 @@ Use !search instead if you want to browse the list of stages by name";
         if (subCommand == "get")
         {
             await HelpGetCommand(message);
+            return;
+        }
+
+        if (subCommand == "update")
+        {
+            await HelpUpdateCommand(message);
+            return;
+
+        }
+
+        if (subCommand == "author")
+        {
+            await HelpAuthorCommand(message);
             return;
         }
     }
@@ -239,12 +286,12 @@ Use !search instead if you want to browse the list of stages by name";
         {
             Name = Path.GetFileNameWithoutExtension(fileName),
             Author = String.Format("{0}#{1}", message.Author.Username.ToLower(), message.Author.Discriminator.ToLower()),
-            Date = DateTime.Now.ToLongDateString()
+            Date = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()
         };
 
         if (repository.StageExists(stage))
         {
-            string response = String.Format("This stage already exists in the community repository. If you are the author of the existing stage, please remove it so you can update the stage.");
+            string response = String.Format("This stage already exists in the community repository. If you are the author of the existing stage, please use !update instead to update your stage.");
             await message.Channel.SendMessageAsync(response);
             return;
         }
@@ -370,5 +417,142 @@ Use !search instead if you want to browse the list of stages by name";
         string response = "Here is the requested stage that you asked for.";
         await message.Channel.SendFileAsync(filePath, response);
     }
+
+
+    public async static Task HandleUpdateCommand(SocketMessage message, CommunityRepository repository)
+    {
+        var attachments = message.Attachments;
+
+        if (attachments.Count == 0)
+        {
+            await message.Channel.SendMessageAsync("You did not upload a file for me to update in the community repository");
+            return;
+        }
+
+        if (attachments.Count > 1)
+        {
+            await message.Channel.SendMessageAsync("Please only send one file at a time.");
+            return;
+        }
+
+        var attachment = message.Attachments.ElementAt(0);
+        string stageName = Path.GetFileNameWithoutExtension(attachment.Filename).Replace("_", " ").Replace("-", " ");
+
+        Stage stage = new Stage()
+        {
+            Name = stageName,
+            Author = String.Format("{0}#{1}", message.Author.Username.ToLower(), message.Author.Discriminator.ToLower()),
+            Date = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()
+        };
+
+        if (!repository.StageExists(stage))
+        {
+            await message.Channel.SendMessageAsync("Failed to update the stage because the stage does not exist in the community repository.");
+            return;
+        }
+
+        Stage repositoryStage = repository.GetStage(stage.Name);
+
+        if (stage.Author != repositoryStage.Author)
+        {
+            await message.Channel.SendMessageAsync("Failed to update the stage because you are not the author of the stage.");
+            return;
+        }
+
+        string URL = attachment.Url;
+        string fileName = attachment.Filename.Replace("_", " ").Replace("-", " ");
+        int randomNumber = new Random().Next();
+        string damnedStageCheckerDirectoryName = String.Format("DamnedStageChecker_{0}", randomNumber);
+        string tempArchive = Path.Combine(Path.GetTempPath(), damnedStageCheckerDirectoryName, fileName);
+        string parentTempArchive = Path.Combine(Path.GetTempPath(), damnedStageCheckerDirectoryName);
+        
+        if (Directory.Exists(parentTempArchive))
+        {
+            Directory.Delete(parentTempArchive, true);
+        }
+
+        Directory.CreateDirectory(parentTempArchive);
+
+        using (WebClient client = new WebClient())
+        {
+            client.DownloadFile(new Uri(URL), tempArchive);
+        }
+
+
+        DamnedPackage package = new DamnedPackage();
+
+        await message.Channel.SendMessageAsync("Checking your updated stage archive now...");
+
+        if (!package.Check(tempArchive))
+        {
+            Directory.Delete(parentTempArchive, true);
+            Directory.Delete(package.tempDirectory, true);
+            await message.Channel.SendMessageAsync(package.reasonForFailedCheck);
+            return;
+
+        }
+
+        await message.Channel.SendMessageAsync("Stage check successful! I am updating your stage in the community repository now...");
+        string oldFilePath = repository.GetPathToStageInCommunityRepository(repositoryStage);
+        File.Delete(oldFilePath);
+        File.Copy(tempArchive, fileName);
+        Directory.Delete(parentTempArchive, true);
+        Directory.Delete(package.tempDirectory, true);
+        repository.UpdateStage(repositoryStage, stage);
+
+        string commitMessage = String.Format("Updated the stage {0} in the community repository", stage.Name);
+        MainClass.UpdateGitHub(commitMessage);
+        await message.Channel.SendMessageAsync("Succcessfully updated your stage that is in the community repository!");
+
+    }
+
+
+    public static async Task HandleAuthorCommand(SocketMessage message, CommunityRepository repository)
+    {
+        string originalMessage = message.Content;
+        string[] splitMessages = originalMessage.Split(new char[] { ' ' }, 3);
+
+        if (splitMessages.Length < 3)
+        {
+            await message.Channel.SendMessageAsync(@"You did not specify a stage name or author. Type in ""!help author"" if you need help.");
+            return;
+        }
+
+        string author = splitMessages[1];
+        string stageName = splitMessages[2];
+
+        Stage stage = new Stage()
+        {
+            Name = stageName,
+            Author = author,
+            Date = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()
+        };
+
+        
+        if (!repository.StageExists(stage))
+        {
+            await message.Channel.SendMessageAsync(String.Format(@"Failed to update the author for the stage ""{0}"" because the stage does not exist in the community repository.", stageName));
+            return;
+
+        }
+
+        Stage oldStage = repository.GetStage(stage.Name);
+
+        string messageAuthor = String.Format("{0}#{1}", message.Author.Username.ToLower(), message.Author.Discriminator.ToLower());
+
+
+        if (oldStage.Author != messageAuthor)
+        {
+            await message.Channel.SendMessageAsync("Failed to update the author of the stage because you are not the author");
+            return;
+        }
+
+        repository.UpdateStage(oldStage, stage);
+        await message.Channel.SendMessageAsync("Updating the author for the stage in the community repository now...");
+        string commitMessage = String.Format(@"Updated the author for the stage {0} from ""{1}"" to ""{2}"".", stageName, oldStage.Author, stage.Author);
+        //MainClass.UpdateGitHub(commitMessage);
+        await message.Channel.SendMessageAsync("Successfully updated the author of the stage!");
+    }
+
 }
 
