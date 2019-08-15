@@ -21,7 +21,7 @@ public class CommunityRepository
 
     private void Refresh()
     {
-        string json = JsonConvert.SerializeObject(this);
+        string json = JsonConvert.SerializeObject(this, Formatting.Indented);
         File.WriteAllText("CommunityStages.json", json);
     }
 
@@ -30,7 +30,6 @@ public class CommunityRepository
     {
         CommunityRepository repository = JsonConvert.DeserializeObject<CommunityRepository>(File.ReadAllText(jsonFile));
         return repository;
-
     }
 
     private void DeleteStageArchive(Stage stage)
